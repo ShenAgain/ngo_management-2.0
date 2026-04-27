@@ -1,0 +1,50 @@
+name: Topic10 reminders
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    # every 15 minutes (matches your CELERY_BEAT_SCHEDULE intent)
+    - cron: "*/15 * * * *"
+
+jobs:
+  reminders:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      DEBUG: "0"
+      SECRET_KEY: ${{ secrets.DJANGO_SECRET_KEY }}
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      CELERY_BROKER_URL: ${{ secrets.CELERY_BROKER_URL }}
+      CELERY_RESULT_BACKEND: ${{ secrets.CELERY_RESULT_BACKEND }}
+      # optional, if your code uses it for URL generation
+      PUBLIC_BASE_URL: ${{ secrets.PUBLIC_BASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Start Celery worker (short-lived)
+        run: |
+          celery -A ngo_management worker -l info &
+          echo $! > celery_worker.pid
+
+      - name: Run reminder job (enqueues + drains queue)
+        run: |
+          python manage.py run_upcoming_activity_reminders
+          # give the worker a little time to drain queued email tasks
+          sleep 20
+
+      - name: Stop Celery worker
+        if: always()
+        run: |
+          if [ -f celery_worker.pid ]; then
+            kill "$(cat celery_worker.pid)" || true
+          fi
+
