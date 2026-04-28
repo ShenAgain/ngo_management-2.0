@@ -26,10 +26,10 @@ class NGOViewSet(viewsets.ModelViewSet):
         cache_key = f"api:v1:ngos:list:v{version}:{request.get_full_path()}"
         cached = cache.get(cache_key)
         if cached is not None:
-            return cached
+            return Response(cached)
 
         resp = super().list(request, *args, **kwargs)
-        cache.set(cache_key, resp, timeout=60)
+        cache.set(cache_key, resp.data, timeout=60)
         return resp
 
     def _bump_cache_version(self):
@@ -81,7 +81,7 @@ class ActivityViewSet(viewsets.ModelViewSet):
         cache_key = f"api:v1:activity:{activity.id}:participants:v{version}"
         cached = cache.get(cache_key)
         if cached is not None:
-            return cached
+            return Response(cached)
 
         from registration.models import Registration
         regs = (
@@ -100,8 +100,9 @@ class ActivityViewSet(viewsets.ModelViewSet):
             }
             for r in regs
         ]
-        resp = Response({'activity_id': activity.id, 'count': len(data), 'results': data})
-        cache.set(cache_key, resp, timeout=60)
+        payload = {'activity_id': activity.id, 'count': len(data), 'results': data}
+        resp = Response(payload)
+        cache.set(cache_key, payload, timeout=60)
         return resp
 
     @action(detail=True, methods=["get"], permission_classes=[IsAuthenticated])
