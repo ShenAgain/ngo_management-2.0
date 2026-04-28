@@ -12,7 +12,7 @@ class NGOSerializer(serializers.ModelSerializer):
 class ActivitySerializer(serializers.ModelSerializer):
     ngo_name = serializers.CharField(source='ngo.name', read_only=True)
     registered_count = serializers.IntegerField(source='get_registered_count', read_only=True)
-    slots_remaining = serializers.IntegerField(source='slots_remaining', read_only=True)
+    slots_remaining = serializers.IntegerField(read_only=True)
     created_by = serializers.SlugRelatedField(read_only=True, slug_field='username')
 
     class Meta:
