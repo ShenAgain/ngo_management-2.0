@@ -141,7 +141,8 @@ SESSION_COOKIE_AGE = 8 * 60 * 60        # 8 hours in seconds
 # Session is destroyed when the browser is closed (belt-and-suspenders)
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 # Topic 6.5: only send session cookie over HTTPS in production
-SESSION_COOKIE_SECURE = False            # set True in production
+# NOTE: must not be hard-coded to False in production (Topic 7.2 / 9.1).
+SESSION_COOKIE_SECURE = not DEBUG
 SESSION_COOKIE_HTTPONLY = True           # JS cannot read the cookie
 CSRF_COOKIE_HTTPONLY = True
 
