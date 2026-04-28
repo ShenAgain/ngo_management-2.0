@@ -4,13 +4,14 @@ accounts/tests/test_api_endpoints.py
 Minimal API tests for the accounts service.
 """
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
 
 from accounts.models import CustomUser
 
 
+@override_settings(ROOT_URLCONF="ngo_management.urls_user_service")
 class AccountsMeApiTests(TestCase):
     def setUp(self):
         self.client = APIClient()
