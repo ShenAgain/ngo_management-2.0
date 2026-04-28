@@ -94,8 +94,8 @@ class RegistrationJourneyIntegrationTests(TestCase):
         self.assertEqual(list_response.status_code, 200)
         self.assertContains(list_response, "Journey Activity")
 
-        register_response = self.client.post(f"/registration/register/{self.activity.id}/", follow=True)
-        self.assertEqual(register_response.status_code, 200)
+        register_response = self.client.post(f"/registration/register/{self.activity.id}/")
+        self.assertEqual(register_response.status_code, 302)
 
         self.activity.refresh_from_db()
         self.assertEqual(Registration.objects.filter(employee=self.employee, activity=self.activity, status="active").count(), 1)
