@@ -5,7 +5,6 @@ Unit tests for ngo_management module including middleware and core functionality
 """
 
 from django.test import TestCase, Client
-from django.http import HttpRequest
 from accounts.models import CustomUser
 from rest_framework.authtoken.models import Token
 
@@ -134,19 +133,23 @@ class URLRoutingTests(TestCase):
 
     def test_gateway_routes_available(self):
         """Test that gateway routes are configured"""
-        # Gateway proxy routes
+        # Gateway proxy routes - these test the URL routing is correct
         endpoints = [
-            '/api/v1/gw/user/',
-            '/api/v1/gw/ngo/',
-            '/api/v1/gw/reg/',
+            '/api/v1/gw/user/me/',
+            '/api/v1/gw/ngo/ngos/',
+            '/api/v1/gw/reg/registrations/',
         ]
         
         for endpoint in endpoints:
-            # These will fail due to missing service, but shouldn't be 404
+            # These will fail due to missing backend service,
+            # but shouldn't return 404 (route not found)
+            # Should get 502 (bad gateway) or similar
             response = self.client.get(endpoint)
-            # We expect 503 (service unavailable) or 502 (bad gateway)
-            # but not 404 (not found)
-            self.assertNotEqual(response.status_code, 404)
+            self.assertNotEqual(
+                response.status_code, 
+                404, 
+                f"Gateway route {endpoint} should exist (returned {response.status_code})"
+            )
 
 
 class SettingsStructureTests(TestCase):
@@ -235,12 +238,16 @@ class DjangoApplicationTests(TestCase):
     def test_manage_py_can_run(self):
         """Test that manage.py exists and is runnable"""
         import os
+        # ngo_management/tests.py -> go up one level to project root
         manage_path = os.path.join(
             os.path.dirname(__file__),
             '..',
             'manage.py'
         )
-        self.assertTrue(os.path.exists(manage_path))
+        self.assertTrue(
+            os.path.exists(manage_path),
+            f"manage.py not found at {manage_path}"
+        )
 
     def test_models_can_be_imported(self):
         """Test that all app models can be imported"""
@@ -257,13 +264,16 @@ class DjangoApplicationTests(TestCase):
         self.assertIsNotNone(Notification)
 
     def test_views_can_be_imported(self):
-        """Test that views can be imported"""
-        from accounts.views import *
-        from ngo.views import *
-        from registration.views import *
-        from notifications.views import *
-        # If we got here, imports succeeded
-        self.assertTrue(True)
+        """Test that view modules can be imported without errors"""
+        try:
+            import accounts.views
+            import ngo.views
+            import registration.views
+            import notifications.views
+            # If we got here, all imports succeeded
+            self.assertTrue(True)
+        except ImportError as e:
+            self.fail(f"Failed to import views module: {e}")
 
     def test_admin_site_works(self):
         """Test that Django admin is accessible"""
