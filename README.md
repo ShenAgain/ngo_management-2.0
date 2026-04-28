@@ -35,9 +35,5 @@ After first deploy:
 python manage.py createsuperuser
 ```
 
-## Topic 10 (Celery) on Render
 
-If you want background emails + reminders in production:
-- Create a Redis instance on Render and set `REDIS_URL` (or `CELERY_BROKER_URL`)
-- Deploy the worker + beat services in `render.yaml`
 
